@@ -2,15 +2,24 @@
 
 const base64 = require('base-64');
 const basicAuth = require('./middleware/basic');
+const { User } = require('./models');
+const bcrypt = require('bcrypt');
+
+beforeAll(async () => {
+  await User.sync();
+  await User.create({
+    username: 'test',
+    password: await bcrypt.hash('test', 10)
+  })
+});
+
+afterAll(async () => {
+  await User.drop({});
+});
 
 describe('Testing basic authentication middleware', () => {
-  test('POSTing ', async () => {
-    let credential = base64.encode("test:secret");
-
-    let expectedJSON = {
-      username: 'test',
-      password: 'secret'
-    }
+  test('Querying the DB to check if user and password are correct ', async () => {
+    let credential = base64.encode("test:test");
 
     let request = {
       headers: {
@@ -28,7 +37,7 @@ describe('Testing basic authentication middleware', () => {
 
     expect(response.status).toBeCalledWith(200);
     expect(response.json)
-      .toBeCalledWith(expect.objectContaining({ password: '$2b$10$HhTEL1fbaeZhMULASrWGN./rXltU71WlY/K7G.a4DgyCJYFbjYMY2' })
+      .toBeCalledWith(expect.objectContaining({ id: 1})
       );
   });
 });
